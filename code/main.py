@@ -4,12 +4,24 @@ from sklearn.model_selection import train_test_split
 from data_formatting import data_form
 from models import get_classification_model
 from export import zindi_submission, prepare_for_submission 
+<<<<<<< HEAD
 from transform_targets import get_transf_targets
+=======
+
+#set file paths
+#train_path = "/content/drive/My Drive/Regression Challenge Shared Folder/Data/Train.csv"
+#test_path = "/content/drive/My Drive/Regression Challenge Shared Folder/Data/Test.csv"
+output_path = "/content/drive/My Drive/Regression Challenge Shared Folder/Outputs/log_reg_results.csv"
+
+train_path = "DSIregression/Data/Train.csv"
+test_path = "DSIregression/Data/Test.csv"
+output_path = "DSIregression/Outputs/results/csv"
+>>>>>>> Read_files
 
 def run():
 	# Import the Datasets
-	train_data = pd.read_csv("/content/drive/My Drive/Regression Challenge Shared Folder/Data/Train.csv", index_col="ID") 
-	test_data = pd.read_csv("/content/drive/My Drive/Regression Challenge Shared Folder/Data/Test.csv", index_col="ID")
+	train_data = pd.read_csv(train_path, index_col="ID")
+	test_data = pd.read_csv(test_path, index_col="ID")
 
 	# Data formatting
 	X_train_n, y_train_n, X_test, y_test, cat_cols, num_cols = data_form(train_data, test_data)    
@@ -38,7 +50,6 @@ def run():
 	# Predict
 	y_pred = model.predict(X_test)
 	y_pred = prepare_for_submission(y_pred, y_test)
-	output_path = "/content/drive/My Drive/Regression Challenge Shared Folder/Outputs/log_reg_results.csv"
 
 	# Export to csv file
 	zindi_submission(y_pred, output_path)
