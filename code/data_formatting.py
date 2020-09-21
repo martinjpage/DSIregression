@@ -59,6 +59,13 @@ def data_form(train_data, test_data):
     test_data["number_product"] = test_data["number_product"].astype('category')
     test_data['customer_cluster'] = test_data['customer_cluster'].astype('category')
 
+    # remove synonymous columns
+    train_data = train_data.drop(['period_client'], axis=1)
+    test_data = test_data.drop(['period_client'], axis=1)
+
+    train_data = train_data.drop(["birth_year"], axis=1)
+    test_data = test_data.drop(["birth_year"], axis=1)
+
     #Separate target from predictors
     y_train = train_data[y_columns]
     X_train = train_data.drop(y_columns, axis = 1)
