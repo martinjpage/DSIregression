@@ -1,4 +1,4 @@
-import libraries
+#import libraries
 import pandas as pd
 import numpy as np
 from sklearn.pipeline import Pipeline
@@ -9,6 +9,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import log_loss
+from sklearn.metrics import make_scorer
 
 #import functions
 from data_formatting import data_form
@@ -50,35 +51,47 @@ preprocessor = ColumnTransformer(
 ## Random Forest Model
 SEED = 2
 
-#instantiate random forest model
-rf = RandomForestClassifier(random_state=SEED)
+class ProbRandomForestClassifier(RandomForestClassifier):
+    """
+    Model wrapper to solve the cross-validation problem
+    predict method is overwritten to output probabilities of getting the label 1
+    """
+    def predict(self, X):
+        train_prediction = RandomForestClassifier.predict_proba(self, X)
+        train_prediction = np.array(train_prediction)[:, :, 1]
+        train_prediction = train_prediction.transpose()
+        return train_prediction
+
+
+rf = ProbRandomForestClassifier(random_state=SEED)
 
 #setup pipeline to bundle preprocessing and modeling code
 rf_steps = [('preprocessor', preprocessor), ('model', rf)]
 rf_pipeline = Pipeline(rf_steps)
 
 #define grid parameters
+# params_rf = {'model__max_depth': [3, 8, 15, None],
+#               'model__max_features': ['sqrt', 'log2'],
+#               "model__min_samples_leaf": [1, 2, 5, 10],
+#               "model__min_samples_split": [2, 5, 10, 15],
+#               'model__n_estimators': [100, 300, 500, 800]}
+
 params_rf = {'model__max_depth': [3, 8, 15, None],
-              'model__max_features': ['sqrt', 'log2'],
-              "model__min_samples_leaf": [1, 2, 5, 10],
-              "model__min_samples_split": [2, 5, 10, 15],
-              'model__n_estimators': [100, 300, 500, 800]}
+              'model__max_features': ['sqrt', 'log2', 'auto'],
+              "model__min_samples_leaf": [1, 5, 10],
+              "model__min_samples_split": [5, 15, 30, 40],
+              'model__n_estimators': [100, 300]}
 
 #instantiate grid
-grid_rf = GridSearchCV(estimator = rf_pipeline, param_grid = params_rf, cv = 3, verbose = 2, n_jobs = -1)
+grid_rf = GridSearchCV(estimator = rf_pipeline, param_grid = params_rf, cv = 3, verbose = 2, n_jobs = None, scoring=make_scorer(log_loss, needs_proba=False)) #change to -1 for parallel
 grid_rf.fit(X_train, y_train)
 
 ### Training Prediction
 grid_rf.best_params_
-# {'model__max_depth': None, 'model__max_features': 'sqrt', 'model__min_samples_leaf': 1, 'model__min_samples_split': 15, 'model__n_estimators': 100}
+# {'model__max_depth': 3, 'model__max_features': 'log2', 'model__min_samples_leaf': 10, 'model__min_samples_split': 30, 'model__n_estimators': 100}
 
-best_rf = grid_rf.best_estimator_
-train_prediction = best_rf.predict_proba(X_train)
-train_prediction = np.array(train_prediction)[:, :, 1]
-train_prediction = train_prediction.transpose()
-train_prediction = pd.DataFrame(train_prediction, index=y_train.index, columns=y_train.columns)
-
-print("Log loss:", log_loss(y_train, train_prediction))
+print("Log loss:", grid_rf.best_score_)
+#3.6410452567769354
 
 ### Training PredictionTest prediction
 y_pred = best_rf.predict_proba(X_test)
@@ -90,6 +103,6 @@ y_pred[y_test == 1] = 1
 y_pred
 
 #CSV output
-zindi_submission(y_pred, "DSIregression/Outputs/RF_tune.csv")
+zindi_submission(y_pred, output_path)
 
-##Zindi score: 0.0616387150925455 (ID: UJDkXURT)
+##Zindi score: 0.0936251630934617 (ID: 7yRnFT4A)
