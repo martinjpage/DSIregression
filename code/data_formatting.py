@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from clustering import get_customer_cluster
 
 def data_form(train_data, test_data):
