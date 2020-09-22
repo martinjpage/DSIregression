@@ -85,3 +85,67 @@ def data_form(train_data, test_data):
     X_test = X_test[my_cols].copy()
 
     return X_train, y_train, X_test, y_test, categorical_cols, numerical_cols
+
+def augment_data(train_data):
+    """
+    Each product with 1 is set to 0 and set as target to
+    create a new row
+    """
+    train_data.insert(0,"target_product","")
+    index_product_start = 9 # index where the product columns start
+    product_columns = train_data.columns[index_product_start:]
+    transf_train_data = []
+    for row in train_data.values:
+        chosen_product_index = np.where(row[index_product_start:] == 1)[0]
+        for i in chosen_product_index:
+            current_row = row.copy()
+            current_row[0] = product_columns[i]
+            current_row[index_product_start + i] = 0
+            transf_train_data.append(current_row)
+    return pd.DataFrame(transf_train_data, columns=train_data.columns)
+
+def simple_data_form(train_data, test_data):
+    """
+    Basic featre engineering and data augmentation
+    """
+    product_columns = ['P5DA', 'RIBP', '8NN1', '7POT', '66FJ','GYSR', 'SOP4', 'RVSZ',
+             'PYUQ', 'LJR9', 'N2MW', 'AHXO', 'BSTQ', 'FM3X','K6QO', 'QBOL',
+             'JWFN', 'JZ9D', 'J9JW', 'GHYX', 'ECY3']
+
+    # FEATURE number of products - Count the products choosen by a user
+    train_data.insert(0,"number_product", train_data[product_columns].sum(axis=1))
+    test_data.insert(0,"number_product",test_data[product_columns].sum(axis=1) + 1)
+
+    # Convert string date to seconds
+    train_data['join_date'] = train_data['join_date'].apply(lambda d: time.mktime (time.strptime(str(d), "%d/%m/%Y")) if str(d) !='nan' else float('nan'))
+    test_data['join_date'] = test_data['join_date'].apply(lambda d: time.mktime (time.strptime(str(d), "%d/%m/%Y")) if str(d) !='nan' else float('nan'))
+    
+    data = pd.concat([train_data, test_data])
+    
+    for index,row in data[data.isna().any(axis=1)].iterrows():
+        birth_year = row["birth_year"]
+        data.loc[index,"join_date"] = np.median(data["join_date"][data["birth_year"] == birth_year])
+        
+    label_encoder = LabelEncoder()
+    categorical_col = ['sex', 'marital_status', 'branch_code', 'occupation_code', 'occupation_category_code']
+    for col in categorical_col:
+        data.loc[:,col] = label_encoder.fit_transform(data.loc[:,col
+                                                               
+    scaler = StandardScaler()
+    numerical_col = ['join_date', 'number_product', 'birth_year']
+    data[numerical_col] = scaler.fit_transform(data[numerical_col])
+                                                               
+    train_data = data[:train_data.shape[0]]
+    test_data = data[-test_data.shape[0]:]                                                          
+    
+    X_train = augment_data(train_data)
+                                                               
+    y_train = X_train[['target_product']]
+    X_train = X_train.drop(['target_product'], axis=1)
+    X_test = test_data
+    
+    target_encoder = LabelEncoder()
+    y_train = target_encoder.fit_transform(y_train.iloc[:,0])  
+                                                               
+    return X_train, y_train, X_test                                                          
+                                                     
