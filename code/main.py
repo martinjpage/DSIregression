@@ -13,7 +13,7 @@ from transform_targets import get_transf_targets
 
 train_path = "DSIregression/Data/Train.csv"
 test_path = "DSIregression/Data/Test.csv"
-output_path = "DSIregression/Outputs/results/csv"
+output_path = "DSIregression/Outputs/results.csv"
 
 def run():
 	# Import the Datasets
